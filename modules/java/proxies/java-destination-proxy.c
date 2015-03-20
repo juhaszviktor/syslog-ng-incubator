@@ -26,6 +26,8 @@
 #include "java-logmsg-proxy.h"
 #include "java-class-loader.h"
 #include "messages.h"
+#include "logpipe.h"
+#include "logmsg.h"
 #include <string.h>
 
 
@@ -211,14 +213,18 @@ gboolean
 java_destination_proxy_send(JavaDestinationProxy *self, LogMessage *msg)
 {
   JNIEnv *env = java_machine_get_env(self->java_machine, &env);
+  gboolean result = FALSE;
+  LogPathOptions path_options = LOG_PATH_OPTIONS_INIT;
+  msg = log_msg_make_writable(&msg, &path_options);
   if (self->dest_impl.mi_send_msg != 0)
     {
-      return __queue_native_message(self, env, msg);
+      result =  __queue_native_message(self, env, msg);
     }
   else
     {
-      return __queue_formatted_message(self, env, msg);
+      result =  __queue_formatted_message(self, env, msg);
     }
+  return result;
 }
 
 gboolean
